@@ -59,6 +59,13 @@ enum hk_keycodes {
     // stops) by +/- 50ms. Saved with HK_SAVE.
     HK_AUTO_MOUSE_TIMEOUT_UP,   // 0x7E0D
     HK_AUTO_MOUSE_TIMEOUT_DOWN, // 0x7E0E
+
+    // Toggles the OLED bongocat animation, switching that half's OLED between
+    // bongocat and the info panels. Targets the master by default; hold shift to
+    // target the peripheral half (same convention as the pointing config keycodes
+    // above). Bongocat is compiled into OLED builds by default (drop it with
+    // BONGO_ENABLE=no). Saved with HK_SAVE.
+    HK_BONGO_TOGGLE, // 0x7E0F
 };
 
 #define HK_SAVE      HK_SAVE_SETTINGS
@@ -76,6 +83,7 @@ enum hk_keycodes {
 #define HK_AML_T     HK_AUTO_MOUSE_TOGGLE
 #define HK_AML_UP    HK_AUTO_MOUSE_TIMEOUT_UP
 #define HK_AML_DN    HK_AUTO_MOUSE_TIMEOUT_DOWN
+#define HK_BONGO_T   HK_BONGO_TOGGLE
 
 // Renders the secondary (peripheral) OLED. The weak default mirrors the master's
 // info panels (the state is split-synced); a board overrides it to show its own

@@ -25,9 +25,10 @@ typedef union PACKED {
             uint8_t peripheral_scroll_throttle;
         } pointing;
 
-        bool check       : 1;
-        bool bongo       : 1;
-        bool aml_enable  : 1;
+        bool check            : 1;
+        bool bongo_main       : 1;
+        bool bongo_peripheral : 1;
+        bool aml_enable       : 1;
         uint8_t version;
         uint16_t aml_timeout;
     };

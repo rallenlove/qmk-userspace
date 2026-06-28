@@ -60,7 +60,11 @@ typedef struct PACKED {
 #define HK_OLED_MAX_PRESSING_KEYCODES 6
 
 typedef struct PACKED {
-    bool           show_bongo;
+    // Per-half bongocat toggle: _main is the master's OLED, _peripheral the other
+    // half's. HK_BONGO_TOGGLE flips _main; shift+HK_BONGO_TOGGLE flips _peripheral
+    // (the same shift-targets-the-peripheral convention as the pointing config).
+    bool           show_bongo_main;
+    bool           show_bongo_peripheral;
     uint16_t       last_kc;
     keypos_t       last_pos;
     report_mouse_t last_mouse;

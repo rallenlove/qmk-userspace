@@ -195,32 +195,58 @@ void hk_oled_render_layerinfo(void) {
 #    endif
 }
 
+// The default info-panel layout: key info, pointer state, and layer/auto-mouse
+// status. Rendered on the master, and on the peripheral when it mirrors the master
+// (the weak hk_oled_render_secondary below).
+static void hk_oled_render_info_panels(void) {
+    hk_oled_render_keyinfo();
+    hk_oled_render_pointer_state();
+    hk_oled_render_layerinfo();
+}
+
+#ifdef HK_BONGO_ENABLE
+// Render either bongocat or the info panels for one OLED, wiping it once on each
+// transition. The two layouts cover different pixels, so without the clear the
+// previous one bleeds through. *shown remembers what's currently drawn (pass a
+// separate instance per OLED).
+static void hk_oled_render_bongo_or_panels(bool show_bongo, bool *shown) {
+    if (*shown != show_bongo) {
+        *shown = show_bongo;
+        oled_clear();
+    }
+    if (show_bongo) {
+        hk_oled_render_bongo();
+    } else {
+        hk_oled_render_info_panels();
+    }
+}
+#endif
+
 // Secondary (peripheral) OLED content. Weak default mirrors the master's info
-// panels — the same content non-split-aware boards have always shown — using the
-// split-synced state. Boards override this to show something else (keyball61plus
-// draws the Keyball logo). Renders nothing until the first state sync arrives.
+// panels (using the split-synced state), or shows its own bongocat when toggled on
+// with shift+HK_BONGO_TOGGLE. Boards override this to show something else
+// (keyball61plus draws the Keyball logo). Renders nothing until the first sync.
 __attribute__((weak)) void hk_oled_render_secondary(void) {
     if (!g_hk_state.init) {
         return;
     }
-    hk_oled_render_keyinfo();
-    hk_oled_render_pointer_state();
-    hk_oled_render_layerinfo();
+#ifdef HK_BONGO_ENABLE
+    static bool shown = false;
+    hk_oled_render_bongo_or_panels(g_hk_state.display.show_bongo_peripheral, &shown);
+#else
+    hk_oled_render_info_panels();
+#endif
 }
 
 bool oled_task_user(void) {
     if (is_keyboard_master()) {
         if (g_hk_state.init) {
 #ifdef HK_BONGO_ENABLE
-            // Opt-in animation; the info panels are the default.
-            if (g_hk_state.display.show_bongo) {
-                hk_oled_render_bongo();
-                return true;
-            }
+            static bool shown = false;
+            hk_oled_render_bongo_or_panels(g_hk_state.display.show_bongo_main, &shown);
+#else
+            hk_oled_render_info_panels();
 #endif
-            hk_oled_render_keyinfo();
-            hk_oled_render_pointer_state();
-            hk_oled_render_layerinfo();
         }
     } else {
         hk_oled_render_secondary();

@@ -604,10 +604,22 @@ ifeq ($(strip $(OLED_FLIP)), yes)
 	MSG_OLED_FLIPPED = (flipped)
 endif
 
-ifeq ($(strip $(BONGO_ENABLE)), yes)
+# Bongocat lives on the holykeebs OLED and is switched on at runtime with
+# HK_BONGO_TOGGLE, so it's compiled in by default rather than gated behind its own
+# build variant (which would double the OLED build matrix). It needs that OLED's
+# render hook and driver, so it only applies with OLED=yes (not stock). Opt out
+# with BONGO_ENABLE=no. The OLEDs still default to the info panels; bongocat shows
+# only once toggled on.
+ifeq ($(strip $(OLED)), yes)
+ifneq ($(strip $(BONGO_ENABLE)), no)
 	WPM_ENABLE = yes
 	SRC += $(USER_PATH)/bongocat.c
 	OPT_DEFS += -DHK_BONGO_ENABLE
+	# Bongocat can also run on the peripheral OLED (shift+HK_BONGO_TOGGLE). It reads
+	# WPM and caps state, which are computed on the master, so sync them to the
+	# peripheral or its animation would sit idle and never show caps.
+	OPT_DEFS += -DSPLIT_WPM_ENABLE -DSPLIT_LED_STATE_ENABLE
+endif
 endif
 
 ifeq ($(strip $(TRACKBALL_RGB_RAINBOW)), yes)

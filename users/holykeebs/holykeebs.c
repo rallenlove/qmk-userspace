@@ -57,7 +57,8 @@ static int16_t serialize_sensitivity(hk_pointer_kind kind, float value) {
 static void hk_apply_sensitivity(const hk_pointer_state_t* state, bool side_peripheral);
 
 static void deserialize_eeconfig_to_state(const hk_eeprom_config_t* config) {
-    g_hk_state.display.show_bongo = config->bongo;
+    g_hk_state.display.show_bongo_main = config->bongo_main;
+    g_hk_state.display.show_bongo_peripheral = config->bongo_peripheral;
 
     g_hk_state.main.cursor_mode = config->pointing.main_cursor_mode;
     g_hk_state.main.drag_scroll = config->pointing.main_drag_scroll;
@@ -77,7 +78,8 @@ static void deserialize_eeconfig_to_state(const hk_eeprom_config_t* config) {
 }
 
 static void serialize_state_to_eeconfig(hk_eeprom_config_t* config) {
-    config->bongo = g_hk_state.display.show_bongo;
+    config->bongo_main = g_hk_state.display.show_bongo_main;
+    config->bongo_peripheral = g_hk_state.display.show_bongo_peripheral;
 
     config->pointing.main_cursor_mode = g_hk_state.main.cursor_mode;
     config->pointing.main_drag_scroll = g_hk_state.main.drag_scroll;
@@ -177,14 +179,13 @@ static hk_state_t init_state(void) {
             .pointer_scroll_throttle = 0,
         },
         .display = {
-            // Show bongocat by default when it's compiled in (-e BONGO_ENABLE=yes),
-            // otherwise the info panels. There's no runtime toggle, so this build
-            // flag is what selects the OLED content.
-#ifdef HK_BONGO_ENABLE
-            .show_bongo = true,
-#else
-            .show_bongo = false,
-#endif
+            // Both OLEDs default to the info panels (the peripheral's is its logo
+            // on boards that override the secondary render). Bongocat is compiled in
+            // by default (see rules.mk) but shown only when toggled on at runtime
+            // with HK_BONGO_TOGGLE; shift targets the peripheral half. Persisted via
+            // HK_SAVE.
+            .show_bongo_main = false,
+            .show_bongo_peripheral = false,
             .last_kc = KC_NO,
             .last_pos = {0, 0},
             .last_mouse = {0, 0, 0, 0, 0},
@@ -796,6 +797,23 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
             break;
 #endif
 
+#ifdef HK_BONGO_ENABLE
+        case HK_BONGO_TOGGLE:
+            if (record->event.pressed) {
+                // Shift targets the peripheral half's OLED, like the pointing
+                // config keycodes. The OLED gets wiped on the render side when the
+                // mode changes (the master can't clear the peripheral's OLED from
+                // here anyway), so just flip the flag and let the sync carry it.
+                if (has_shift_mod()) {
+                    g_hk_state.display.show_bongo_peripheral = !g_hk_state.display.show_bongo_peripheral;
+                } else {
+                    g_hk_state.display.show_bongo_main = !g_hk_state.display.show_bongo_main;
+                }
+                state_changed = true;
+            }
+            break;
+#endif
+
     }
     if (state_changed) {
         debug_hk_state_to_console(&g_hk_state);
@@ -927,9 +945,9 @@ void keyboard_post_init_user(void) {
         }
         printf("keyboard_post_init_user: eeprom data not found, initializing\n");
         eeconfig_init_user();
-    } else if (hk_eeprom_config.version != 102) {
+    } else if (hk_eeprom_config.version != 103) {
         // If the version isn't the latest one then the structure changed, reset it to avoid deserialization issues.
-        printf("keyboard_post_init_user: eeprom version is old, resetting to avoid deserialization issues (found %u, expected 102)\n", hk_eeprom_config.version);
+        printf("keyboard_post_init_user: eeprom version is old, resetting to avoid deserialization issues (found %u, expected 103)\n", hk_eeprom_config.version);
         eeconfig_init_user();
     } else {
         g_hk_state = init_state();
@@ -952,7 +970,7 @@ void                       eeconfig_init_user(void) {
 
     memset(&hk_eeprom_config, 0, sizeof(hk_eeprom_config_t));
     hk_eeprom_config.check = true;
-    hk_eeprom_config.version = 102; // Increment this when changing the eeprom config structure.
+    hk_eeprom_config.version = 103; // Increment this when changing the eeprom config structure.
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
     // Default the auto-mouse layer on — QMK leaves it off, so a board that enables
     // the feature would otherwise never auto-activate the mouse layer. serialize
