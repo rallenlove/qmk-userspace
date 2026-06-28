@@ -1,0 +1,5 @@
+# QMK copies built firmware into the overlay root (cpfirmware_userspace).
+*.uf2
+*.bin
+*.hex
+*.elf
