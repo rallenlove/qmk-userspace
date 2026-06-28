@@ -839,7 +839,7 @@ static void hk_detect_pointing_invoke(void) {
     }
     negotiated = true;
 
-    bool this_have  = pointing_device_get_status() == POINTING_DEVICE_STATUS_SUCCESS;
+    bool this_have  = hk_local_pointing_present();
     bool that_have  = recv.have_pointing;
     bool left_have  = is_keyboard_left() ? this_have : that_have;
     bool right_have = is_keyboard_left() ? that_have : this_have;

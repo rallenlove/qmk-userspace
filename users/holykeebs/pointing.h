@@ -4,6 +4,26 @@
 #include <stdint.h>
 #include "quantum.h"
 
+// Whether THIS half currently has a working pointing device — used by the
+// peripheral info RPC and the runtime ball detection (HK_SPLIT_DETECT_POINTING).
+//
+// The two QMK bases this userspace builds on diverge here:
+//  - Newer bases (qmk_firmware) expose the generic pointing_device_get_status().
+//  - Older bases (vial-qmk) lack it, so a board on such a base defines
+//    HK_NO_POINTING_DEVICE_STATUS and we use the PMW3360-specific pmw33xx_init_ok
+//    global instead. Detection is dual-PMW3360-only, so that's always valid there.
+#ifdef HK_NO_POINTING_DEVICE_STATUS
+#    include "drivers/sensors/pmw33xx_common.h"
+static inline bool hk_local_pointing_present(void) {
+    return pmw33xx_init_ok;
+}
+#else
+#    include "pointing_device.h"
+static inline bool hk_local_pointing_present(void) {
+    return pointing_device_get_status() == POINTING_DEVICE_STATUS_SUCCESS;
+}
+#endif
+
 typedef enum {
     POINTER_KIND_NONE,
     POINTER_KIND_PIMORONI_TRACKBALL,

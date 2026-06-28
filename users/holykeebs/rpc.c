@@ -18,10 +18,10 @@ void hk_rpc_sync_state(uint8_t in_buflen, const void* in_data, uint8_t out_bufle
 }
 
 // Runs on the peripheral: report whether this half has a working pointing device.
-// In a combined split, pointing_device_get_status() reflects the local sensor.
+// In a combined split, the local sensor status reflects whether a ball is fitted.
 void hk_rpc_get_pointing_info(uint8_t in_buflen, const void* in_data, uint8_t out_buflen, void* out_data) {
     hk_pointing_info_t info = {
-        .have_pointing = pointing_device_get_status() == POINTING_DEVICE_STATUS_SUCCESS,
+        .have_pointing = hk_local_pointing_present(),
     };
     *(hk_pointing_info_t*)out_data = info;
 }
