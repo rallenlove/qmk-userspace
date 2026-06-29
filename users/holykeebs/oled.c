@@ -255,15 +255,14 @@ bool oled_task_user(void) {
 }
 
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-#ifdef OLED_FLIP
-    // The peripheral OLED is mounted rotated 180° relative to the master on these
-    // split boards. keyball61plus ships one combined image, so the side can't be
-    // pinned at build time — decide it at runtime. Enabled via -e OLED_FLIP=yes
-    // (see CLAUDE.md). Boards/keymaps that need a different orientation can still
-    // override oled_init_user themselves.
+    // The off-hand (peripheral) OLED is mounted inverted relative to the master on
+    // these split boards, so flip it 180° by default. Compose with the board's base
+    // rotation (^ OLED_ROTATION_180) rather than forcing a value, so a board whose
+    // master OLED is itself rotated stays consistent. This is the long-standing
+    // default and matches the per-keymap stock-OLED behavior; a board/keymap can
+    // still override oled_init_user for an unusual mounting.
     if (!is_keyboard_master()) {
-        return OLED_ROTATION_180;
+        return rotation ^ OLED_ROTATION_180;
     }
-#endif
     return rotation;
 }
