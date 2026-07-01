@@ -222,14 +222,27 @@ static void hk_oled_render_bongo_or_panels(bool show_bongo, bool *shown) {
 }
 #endif
 
+// How long this half's state may stay uninitialized before the OLED shows a hint
+// instead of a blank screen. A peripheral syncs well under this on a normal boot;
+// kept below SPLIT_WATCHDOG_TIMEOUT (3000ms) so it appears before any watchdog reset.
+#define HK_OLED_NOT_READY_GRACE_MS 1500
+
+// Shown when this half's state never initializes: the halves aren't talking, most
+// often because USB is in the wrong half (the master is pinned to the pointing-
+// device side, so USB must go there — see the MASTER_SIDE logic in rules.mk).
+static void hk_oled_render_connect_msg(void) {
+    oled_set_cursor(0, 0);
+    oled_write_P(PSTR("Connect USB"), false);
+    oled_set_cursor(0, 1);
+    oled_write_P(PSTR("to other half"), false);
+}
+
 // Secondary (peripheral) OLED content. Weak default mirrors the master's info
 // panels (using the split-synced state), or shows its own bongocat when toggled on
 // with shift+HK_BONGO_TOGGLE. Boards override this to show something else
-// (keyball61plus draws the Keyball logo). Renders nothing until the first sync.
+// (keyball61plus draws the Keyball logo). oled_task_user only calls this once the
+// state is initialized, so no init guard is needed here.
 __attribute__((weak)) void hk_oled_render_secondary(void) {
-    if (!g_hk_state.init) {
-        return;
-    }
 #ifdef HK_BONGO_ENABLE
     static bool shown = false;
     hk_oled_render_bongo_or_panels(g_hk_state.display.show_bongo_peripheral, &shown);
@@ -239,15 +252,36 @@ __attribute__((weak)) void hk_oled_render_secondary(void) {
 }
 
 bool oled_task_user(void) {
-    if (is_keyboard_master()) {
-        if (g_hk_state.init) {
-#ifdef HK_BONGO_ENABLE
-            static bool shown = false;
-            hk_oled_render_bongo_or_panels(g_hk_state.display.show_bongo_main, &shown);
-#else
-            hk_oled_render_info_panels();
-#endif
+    static bool was_ready = false;
+
+    // Until this half's state is initialized, neither render path has valid content.
+    // That's normal for a peripheral in the short window before its first state sync;
+    // if it persists, the halves aren't talking — most often USB plugged into the
+    // wrong half. Blank during a grace period so the OLED doesn't show power-on
+    // garbage, then a hint if it's still not ready.
+    if (!g_hk_state.init) {
+        was_ready = false;
+        oled_clear();
+        if (timer_read32() > HK_OLED_NOT_READY_GRACE_MS) {
+            hk_oled_render_connect_msg();
         }
+        return true;
+    }
+
+    // First frame after becoming ready: wipe the not-ready screen so it doesn't
+    // bleed under the panels.
+    if (!was_ready) {
+        was_ready = true;
+        oled_clear();
+    }
+
+    if (is_keyboard_master()) {
+#ifdef HK_BONGO_ENABLE
+        static bool shown = false;
+        hk_oled_render_bongo_or_panels(g_hk_state.display.show_bongo_main, &shown);
+#else
+        hk_oled_render_info_panels();
+#endif
     } else {
         hk_oled_render_secondary();
     }
