@@ -318,15 +318,7 @@ bool oled_task_user(void) {
     return true;
 }
 
-oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    // The off-hand (peripheral) OLED is mounted inverted relative to the master on
-    // these split boards, so flip it 180° by default. Compose with the board's base
-    // rotation (^ OLED_ROTATION_180) rather than forcing a value, so a board whose
-    // master OLED is itself rotated stays consistent. This is the long-standing
-    // default and matches the per-keymap stock-OLED behavior; a board/keymap can
-    // still override oled_init_user for an unusual mounting.
-    if (!is_keyboard_master()) {
-        return rotation ^ OLED_ROTATION_180;
-    }
-    return rotation;
-}
+// Rotation is deliberately left alone: all these boards mount both halves' OLEDs
+// the same way, so the driver's base rotation is correct on both halves and no
+// off-hand flip is applied. A future board with an inverted OLED would flip it in
+// its own oled_init_kb, not here.
