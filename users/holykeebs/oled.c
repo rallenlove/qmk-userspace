@@ -246,8 +246,8 @@ static void hk_oled_render_connect_msg(void) {
     }
 
     // For an even number of rows a single line can't sit exactly on the center;
-    // this picks the upper-middle row (row 1 of 4 on a 128x32).
-    oled_set_cursor(0, (oled_max_lines() - 1) / 2);
+    // the lower-middle row (row 2 of 4 on a 128x32) reads centered on hardware.
+    oled_set_cursor(0, oled_max_lines() / 2);
     for (uint8_t i = 0; i < oled_max_chars(); i++) {
         oled_write_char(msg[(offset + i) % cycle], false);
     }
