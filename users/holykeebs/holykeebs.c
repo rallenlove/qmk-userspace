@@ -24,6 +24,11 @@
 #include "transactions.h"
 #endif
 
+#if (defined(HK_POINTING_DEVICE_LEFT_TRACKPOINT) || defined(HK_POINTING_DEVICE_RIGHT_TRACKPOINT)) && defined(OLED_ENABLE)
+// I2C1_SDA_PAL_MODE / I2C1_SCL_PAL_MODE for the PS/2-failure pin restore below.
+#include "chibios_config.h"
+#endif
+
 #define _CONSTRAIN(amt, low, high) ((amt) < (low) ? (low) : ((amt) > (high) ? (high) : (amt)))
 #define CONSTRAIN_XY(val)      (mouse_xy_report_t) _CONSTRAIN(val, MOUSE_REPORT_XY_MIN, MOUSE_REPORT_XY_MAX)
 #define CONSTRAIN_HV(val)      (mouse_hv_report_t) _CONSTRAIN(val, MOUSE_REPORT_HV_MIN, MOUSE_REPORT_HV_MAX)
@@ -959,6 +964,19 @@ void keyboard_post_init_user(void) {
     // and the loaded auto-mouse settings into QMK's auto_mouse.
     hk_apply_sensitivity_all();
     hk_apply_aml();
+
+#if (defined(HK_POINTING_DEVICE_LEFT_TRACKPOINT) || defined(HK_POINTING_DEVICE_RIGHT_TRACKPOINT)) && defined(OLED_ENABLE)
+    // The trackpoint's PS/2 pins double as the OLED's I2C bus (GP2/GP3 on the
+    // Pro Micro RP2040 footprint). When PS/2 init fails - no trackpoint on this
+    // half, i.e. USB is in the wrong half - ps2_mouse_init tears the PS/2 host
+    // driver down and releases the pins; hand them back to I2C here so the OLED
+    // (already initialized before the pins were taken) resumes working and can
+    // show the wrong-half marquee.
+    if (!hk_local_pointing_present()) {
+        palSetLineMode(I2C1_SDA_PIN, I2C1_SDA_PAL_MODE);
+        palSetLineMode(I2C1_SCL_PIN, I2C1_SCL_PAL_MODE);
+    }
+#endif
 
     keyboard_post_init_keymap();
 }
