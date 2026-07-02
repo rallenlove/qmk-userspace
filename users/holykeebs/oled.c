@@ -222,16 +222,10 @@ static void hk_oled_render_bongo_or_panels(bool show_bongo, bool *shown) {
 }
 #endif
 
-// How long this half's state may stay uninitialized before the OLED shows a hint
-// instead of a blank screen. A peripheral syncs well under this on a normal boot;
-// kept below SPLIT_WATCHDOG_TIMEOUT (3000ms) so it appears before any watchdog reset.
-#define HK_OLED_NOT_READY_GRACE_MS 1500
-
 // Shown when USB is plugged into the wrong half. With SPLIT_USB_DETECT the USB
 // side always becomes the master, but these builds pin the master to the
 // pointing-device side (MASTER_SIDE in rules.mk), so a correctly-plugged master
-// always has its pointing device locally. Also shown when a half's state never
-// initializes (a peripheral that never receives a sync).
+// always has its pointing device locally.
 static void hk_oled_render_connect_msg(void) {
     oled_set_cursor(0, 0);
     oled_write_P(PSTR("Connect USB"), false);
@@ -241,10 +235,10 @@ static void hk_oled_render_connect_msg(void) {
 
 // True when USB is in the wrong half: this half is the master, a pointing device
 // is configured for the master side, but none is present locally — it's sitting
-// on the other half. Skipped for boards with runtime ball detection
-// (HK_SPLIT_DETECT_POINTING): there a master without a local device is legitimate.
-// A grace period covers slow device init and lets the message clear on the next
-// render if the device recovers.
+// on the other half. The device status is fixed by pointing_device_init before
+// the first render, so no settling time is needed. Skipped for boards with
+// runtime ball detection (HK_SPLIT_DETECT_POINTING): there a master without a
+// local device is legitimate.
 static bool hk_oled_wrong_half(void) {
 #if defined(POINTING_DEVICE_ENABLE) && !defined(HK_SPLIT_DETECT_POINTING)
     return g_hk_state.main.pointer_kind != POINTER_KIND_NONE && !hk_local_pointing_present();
@@ -268,35 +262,22 @@ __attribute__((weak)) void hk_oled_render_secondary(void) {
 }
 
 bool oled_task_user(void) {
-    static bool was_ready = false;
-
-    // Until this half's state is initialized, neither render path has valid content.
-    // That's normal for a peripheral in the short window before its first state sync;
-    // if it persists, the halves aren't talking — most often USB plugged into the
-    // wrong half. Blank during a grace period so the OLED doesn't show power-on
-    // garbage, then a hint if it's still not ready.
+    // Until this half's state is initialized, neither render path has valid
+    // content, so keep the OLED blank (not power-on garbage). This is a
+    // peripheral before its first state sync — which arrives with the first
+    // keypress or pointer motion, so an idle boot can sit here a while; that's
+    // normal, not an error.
     if (!g_hk_state.init) {
-        was_ready = false;
         oled_clear();
-        if (timer_read32() > HK_OLED_NOT_READY_GRACE_MS) {
-            hk_oled_render_connect_msg();
-        }
         return true;
-    }
-
-    // First frame after becoming ready: wipe the not-ready screen so it doesn't
-    // bleed under the panels.
-    if (!was_ready) {
-        was_ready = true;
-        oled_clear();
     }
 
     if (is_keyboard_master()) {
         // USB in the wrong half: this master should have its pointing device
-        // locally but doesn't. Hint instead of the panels (grace covers device
-        // init time; wipe on each transition so the layouts don't overlap).
+        // locally but doesn't. Hint instead of the panels (wipe on each
+        // transition so the layouts don't overlap).
         static bool showing_wrong_half = false;
-        bool wrong_half = hk_oled_wrong_half() && timer_read32() > HK_OLED_NOT_READY_GRACE_MS;
+        bool wrong_half = hk_oled_wrong_half();
         if (wrong_half != showing_wrong_half) {
             showing_wrong_half = wrong_half;
             oled_clear();
