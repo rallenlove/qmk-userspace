@@ -227,14 +227,30 @@ static void hk_oled_render_bongo_or_panels(bool show_bongo, bool *shown) {
 // kept below SPLIT_WATCHDOG_TIMEOUT (3000ms) so it appears before any watchdog reset.
 #define HK_OLED_NOT_READY_GRACE_MS 1500
 
-// Shown when this half's state never initializes: the halves aren't talking, most
-// often because USB is in the wrong half (the master is pinned to the pointing-
-// device side, so USB must go there — see the MASTER_SIDE logic in rules.mk).
+// Shown when USB is plugged into the wrong half. With SPLIT_USB_DETECT the USB
+// side always becomes the master, but these builds pin the master to the
+// pointing-device side (MASTER_SIDE in rules.mk), so a correctly-plugged master
+// always has its pointing device locally. Also shown when a half's state never
+// initializes (a peripheral that never receives a sync).
 static void hk_oled_render_connect_msg(void) {
     oled_set_cursor(0, 0);
     oled_write_P(PSTR("Connect USB"), false);
     oled_set_cursor(0, 1);
     oled_write_P(PSTR("to other half"), false);
+}
+
+// True when USB is in the wrong half: this half is the master, a pointing device
+// is configured for the master side, but none is present locally — it's sitting
+// on the other half. Skipped for boards with runtime ball detection
+// (HK_SPLIT_DETECT_POINTING): there a master without a local device is legitimate.
+// A grace period covers slow device init and lets the message clear on the next
+// render if the device recovers.
+static bool hk_oled_wrong_half(void) {
+#if defined(POINTING_DEVICE_ENABLE) && !defined(HK_SPLIT_DETECT_POINTING)
+    return g_hk_state.main.pointer_kind != POINTER_KIND_NONE && !hk_local_pointing_present();
+#else
+    return false;
+#endif
 }
 
 // Secondary (peripheral) OLED content. Weak default mirrors the master's info
@@ -276,6 +292,19 @@ bool oled_task_user(void) {
     }
 
     if (is_keyboard_master()) {
+        // USB in the wrong half: this master should have its pointing device
+        // locally but doesn't. Hint instead of the panels (grace covers device
+        // init time; wipe on each transition so the layouts don't overlap).
+        static bool showing_wrong_half = false;
+        bool wrong_half = hk_oled_wrong_half() && timer_read32() > HK_OLED_NOT_READY_GRACE_MS;
+        if (wrong_half != showing_wrong_half) {
+            showing_wrong_half = wrong_half;
+            oled_clear();
+        }
+        if (wrong_half) {
+            hk_oled_render_connect_msg();
+            return true;
+        }
 #ifdef HK_BONGO_ENABLE
         static bool shown = false;
         hk_oled_render_bongo_or_panels(g_hk_state.display.show_bongo_main, &shown);
