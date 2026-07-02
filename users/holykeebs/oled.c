@@ -226,11 +226,31 @@ static void hk_oled_render_bongo_or_panels(bool show_bongo, bool *shown) {
 // side always becomes the master, but these builds pin the master to the
 // pointing-device side (MASTER_SIDE in rules.mk), so a correctly-plugged master
 // always has its pointing device locally.
+//
+// Rendered as a train-destination-sign marquee: one vertically centered line,
+// scrolling right-to-left and wrapping around the edge. The cycle is the message
+// plus a gap so the wrap reads as a loop, and each frame draws a display-wide
+// window into it (a software marquee: the SSD1306 hardware scroll would be free,
+// but the driver can't update the buffer while it runs).
+#define HK_OLED_MARQUEE_STEP_MS 200
+
 static void hk_oled_render_connect_msg(void) {
-    oled_set_cursor(0, 0);
-    oled_write_P(PSTR("Connect USB"), false);
-    oled_set_cursor(0, 1);
-    oled_write_P(PSTR("to other half"), false);
+    static const char msg[]     = "Connect USB to other half     ";
+    static const uint8_t cycle  = sizeof(msg) - 1;
+    static uint8_t  offset      = 0;
+    static uint32_t last_step   = 0;
+
+    if (timer_elapsed32(last_step) > HK_OLED_MARQUEE_STEP_MS) {
+        last_step = timer_read32();
+        offset    = (offset + 1) % cycle;
+    }
+
+    // For an even number of rows a single line can't sit exactly on the center;
+    // this picks the upper-middle row (row 1 of 4 on a 128x32).
+    oled_set_cursor(0, (oled_max_lines() - 1) / 2);
+    for (uint8_t i = 0; i < oled_max_chars(); i++) {
+        oled_write_char(msg[(offset + i) % cycle], false);
+    }
 }
 
 // True when USB is in the wrong half: this half is the master, a pointing device
