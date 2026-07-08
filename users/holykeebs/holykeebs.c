@@ -747,10 +747,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
             g_hk_state.setting_scroll_throttle = record->event.pressed;
             // state_changed = true;
             break;
-        case HK_SNIPING_MODE:
-            hk_set_cursor_mode(/*mode=*/CURSOR_MODE_SNIPING, /*enabled=*/record->event.pressed, /*side_peripheral=*/has_shift_mod());
+        case HK_SNIPING_MODE: {
+            // Latch the shift-selected side at press: sampling it again at release
+            // would toggle the other half whenever shift changed mid-hold (e.g.
+            // shift-clicking while sniping, or releasing shift before the key when
+            // targeting the peripheral), leaving the pressed side stuck in the mode.
+            static bool snipe_side_peripheral = false;
+            if (record->event.pressed) {
+                snipe_side_peripheral = has_shift_mod();
+            }
+            hk_set_cursor_mode(/*mode=*/CURSOR_MODE_SNIPING, /*enabled=*/record->event.pressed, /*side_peripheral=*/snipe_side_peripheral);
             state_changed = true;
             break;
+        }
         case HK_SNIPING_MODE_TOGGLE:
             if (record->event.pressed) {
                 bool is_on = hk_get_cursor_mode(/*side_peripheral=*/has_shift_mod()) == CURSOR_MODE_SNIPING;
@@ -758,10 +767,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                 state_changed = true;
             }
             break;
-        case HK_DRAGSCROLL_MODE:
-            hk_set_dragscroll(/*enabled=*/record->event.pressed, /*side_peripheral=*/has_shift_mod());
+        case HK_DRAGSCROLL_MODE: {
+            // Same press-time latch as HK_SNIPING_MODE above.
+            static bool dragscroll_side_peripheral = false;
+            if (record->event.pressed) {
+                dragscroll_side_peripheral = has_shift_mod();
+            }
+            hk_set_dragscroll(/*enabled=*/record->event.pressed, /*side_peripheral=*/dragscroll_side_peripheral);
             state_changed = true;
             break;
+        }
         case HK_DRAGSCROLL_MODE_TOGGLE:
             if (record->event.pressed) {
                 bool is_on = hk_get_dragscroll(/*side_peripheral=*/has_shift_mod());
