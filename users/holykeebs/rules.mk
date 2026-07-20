@@ -27,7 +27,7 @@ ifdef POINTING_DEVICE
 endif
 
 ifeq ($(strip $(POINTING_DEVICE_ENABLE)), yes)
-	SRC += $(USER_PATH)/holykeebs.c $(USER_PATH)/hk_debug.c $(USER_PATH)/rpc.c $(USER_PATH)/pimoroni.c $(USER_PATH)/trackpoint.c
+	SRC += $(USER_PATH)/holykeebs.c $(USER_PATH)/hk_debug.c $(USER_PATH)/rpc.c $(USER_PATH)/pimoroni.c $(USER_PATH)/trackpoint.c $(USER_PATH)/hand.c
 endif
 
 MSG_POINTING_DEVICE = none
@@ -565,12 +565,13 @@ ifeq ($(strip $(POINTING_DEVICE)), cirque40_trackpoint)
 	MASTER_SIDE = right
 endif
 
-# keyball61plus brings its own hand detection (SPLIT_HAND_MATRIX_GRID) and selects
-# the master from USB/VBUS, so no master side is pinned — the userspace config.h
+# keyball61plus brings its own hand detection (HK_HAND_FROM_POINTER: probe the
+# local PMW3360, sensor present = right half; see hand.c) and selects the
+# master from USB/VBUS, so no master side is pinned — the userspace config.h
 # skips the forced MASTER_* for it. Don't pass HK_MASTER_* (it'd be unused) and
 # report the runtime behavior in the summary.
 ifeq ($(strip $(KEYBOARD)), holykeebs/keyball61plus)
-	MSG_MASTER_SIDE = auto (USB; hand via matrix grid)
+	MSG_MASTER_SIDE = auto (USB; hand via pointer probe)
 	MSG_POINTING_DEVICE = dual PMW3360 trackball (runtime-detected)
 else ifeq ($(strip $(MASTER_SIDE)), left)
 	MSG_MASTER_SIDE = left

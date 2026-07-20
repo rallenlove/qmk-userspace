@@ -31,11 +31,12 @@
     // USB must always go to that half. Most holykeebs boards work this way.
     //
     // Boards that bring their own hand detection (e.g. keyball61plus's
-    // SPLIT_HAND_MATRIX_GRID) resolve the hand at runtime and the master from
+    // HK_HAND_FROM_POINTER sensor probe, or a SPLIT_HAND_MATRIX_GRID /
+    // SPLIT_HAND_PIN circuit) resolve the hand at runtime and the master from
     // USB/VBUS independently, so no master side is pinned and USB can go to
-    // either half. Don't force one here: it would be ignored anyway (the grid
-    // wins in is_keyboard_left_impl) but is misleading.
-    #if !defined(SPLIT_HAND_MATRIX_GRID) && !defined(SPLIT_HAND_PIN)
+    // either half. Don't force one here: it would be ignored anyway (the
+    // board's detection wins in is_keyboard_left_impl) but is misleading.
+    #if !defined(SPLIT_HAND_MATRIX_GRID) && !defined(SPLIT_HAND_PIN) && !defined(HK_HAND_FROM_POINTER)
         #if defined(HK_MASTER_LEFT)
             #define MASTER_LEFT
         #elif defined(HK_MASTER_RIGHT)
