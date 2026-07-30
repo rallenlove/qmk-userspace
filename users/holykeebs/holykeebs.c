@@ -61,7 +61,26 @@ static int16_t serialize_sensitivity(hk_pointer_kind kind, float value) {
 // definition) re-applies the CPI when sniping toggles.
 static void hk_apply_sensitivity(const hk_pointer_state_t* state, bool side_peripheral);
 
+// A sensitivity of 0 multiplies that side's motion to nothing (scale_movement),
+// so the pointer still clicks and scrolls but never moves - invisible from the
+// outside and hard to trace back to a setting. The schema version and the kind
+// check should keep one from ever being loaded; take the default this
+// configuration computed rather than trust that. A side with no device keeps its
+// 0, which nothing reads.
+static float validated_sensitivity(hk_pointer_kind kind, float stored, float fallback) {
+    if (kind == POINTER_KIND_NONE || stored > 0) {
+        return stored;
+    }
+    printf("deserialize_eeconfig_to_state: ignoring a stored sensitivity of 0 for a %s, using %.2f\n", hk_pointer_kind_to_string(kind), fallback);
+    return fallback;
+}
+
+// Called with g_hk_state holding init_state's values, so they double as the
+// fallback for anything stored that can't be right.
 static void deserialize_eeconfig_to_state(const hk_eeprom_config_t* config) {
+    const hk_pointer_state_t main_defaults = g_hk_state.main;
+    const hk_pointer_state_t peripheral_defaults = g_hk_state.peripheral;
+
     g_hk_state.display.show_bongo_main = config->bongo_main;
     g_hk_state.display.show_bongo_peripheral = config->bongo_peripheral;
 
@@ -69,16 +88,16 @@ static void deserialize_eeconfig_to_state(const hk_eeprom_config_t* config) {
     g_hk_state.main.drag_scroll = config->pointing.main_drag_scroll;
     g_hk_state.main.scroll_lock = config->pointing.main_scroll_lock;
     g_hk_state.main.scroll_direction_inverted = config->pointing.main_scroll_direction_inverted;
-    g_hk_state.main.pointer_default_sensitivity = deserialize_sensitivity(g_hk_state.main.pointer_kind, config->pointing.main_default_sensitivity);
-    g_hk_state.main.pointer_sniping_sensitivity = deserialize_sensitivity(g_hk_state.main.pointer_kind, config->pointing.main_sniping_sensitivity);
+    g_hk_state.main.pointer_default_sensitivity = validated_sensitivity(main_defaults.pointer_kind, deserialize_sensitivity(main_defaults.pointer_kind, config->pointing.main_default_sensitivity), main_defaults.pointer_default_sensitivity);
+    g_hk_state.main.pointer_sniping_sensitivity = validated_sensitivity(main_defaults.pointer_kind, deserialize_sensitivity(main_defaults.pointer_kind, config->pointing.main_sniping_sensitivity), main_defaults.pointer_sniping_sensitivity);
     g_hk_state.main.pointer_scroll_throttle = config->pointing.main_scroll_throttle;
 
     g_hk_state.peripheral.cursor_mode = config->pointing.peripheral_cursor_mode;
     g_hk_state.peripheral.drag_scroll = config->pointing.peripheral_drag_scroll;
     g_hk_state.peripheral.scroll_lock = config->pointing.peripheral_scroll_lock;
     g_hk_state.peripheral.scroll_direction_inverted = config->pointing.peripheral_scroll_direction_inverted;
-    g_hk_state.peripheral.pointer_default_sensitivity = deserialize_sensitivity(g_hk_state.peripheral.pointer_kind, config->pointing.peripheral_default_sensitivity);
-    g_hk_state.peripheral.pointer_sniping_sensitivity = deserialize_sensitivity(g_hk_state.peripheral.pointer_kind, config->pointing.peripheral_sniping_sensitivity);
+    g_hk_state.peripheral.pointer_default_sensitivity = validated_sensitivity(peripheral_defaults.pointer_kind, deserialize_sensitivity(peripheral_defaults.pointer_kind, config->pointing.peripheral_default_sensitivity), peripheral_defaults.pointer_default_sensitivity);
+    g_hk_state.peripheral.pointer_sniping_sensitivity = validated_sensitivity(peripheral_defaults.pointer_kind, deserialize_sensitivity(peripheral_defaults.pointer_kind, config->pointing.peripheral_sniping_sensitivity), peripheral_defaults.pointer_sniping_sensitivity);
     g_hk_state.peripheral.pointer_scroll_throttle = config->pointing.peripheral_scroll_throttle;
 }
 
