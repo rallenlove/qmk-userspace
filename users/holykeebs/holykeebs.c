@@ -86,6 +86,9 @@ static void serialize_state_to_eeconfig(hk_eeprom_config_t* config) {
     config->bongo_main = g_hk_state.display.show_bongo_main;
     config->bongo_peripheral = g_hk_state.display.show_bongo_peripheral;
 
+    config->pointing.main_pointer_kind = g_hk_state.main.pointer_kind;
+    config->pointing.peripheral_pointer_kind = g_hk_state.peripheral.pointer_kind;
+
     config->pointing.main_cursor_mode = g_hk_state.main.cursor_mode;
     config->pointing.main_drag_scroll = g_hk_state.main.drag_scroll;
     config->pointing.main_scroll_lock = g_hk_state.main.scroll_lock;
@@ -953,6 +956,10 @@ void keyboard_post_init_user(void) {
         return;
     }
 
+    // The pointer kinds this firmware actually has are needed to validate the
+    // saved block below, so build the default state first either way.
+    g_hk_state = init_state();
+
     memset(&hk_eeprom_config, 0, sizeof(hk_eeprom_config_t));
     eeconfig_read_user_datablock(&hk_eeprom_config, 0, sizeof(hk_eeprom_config_t));
     printf("keyboard_post_init_user: reading eeprom, check: %u, version: %u\n", hk_eeprom_config.check, hk_eeprom_config.version);
@@ -965,12 +972,20 @@ void keyboard_post_init_user(void) {
         }
         printf("keyboard_post_init_user: eeprom data not found, initializing\n");
         eeconfig_init_user();
-    } else if (hk_eeprom_config.version != 103) {
+    } else if (hk_eeprom_config.version != HK_EEPROM_CONFIG_VERSION) {
         // If the version isn't the latest one then the structure changed, reset it to avoid deserialization issues.
-        printf("keyboard_post_init_user: eeprom version is old, resetting to avoid deserialization issues (found %u, expected 103)\n", hk_eeprom_config.version);
+        printf("keyboard_post_init_user: eeprom version is old, resetting to avoid deserialization issues (found %u, expected %u)\n", hk_eeprom_config.version, HK_EEPROM_CONFIG_VERSION);
+        eeconfig_init_user();
+    } else if (hk_eeprom_config.pointing.main_pointer_kind != g_hk_state.main.pointer_kind || hk_eeprom_config.pointing.peripheral_pointer_kind != g_hk_state.peripheral.pointer_kind) {
+        // Saved under a different pointing configuration (a different
+        // POINTING_DEVICE build was flashed before this one). Its per-side
+        // settings describe the wrong hardware, and a side that had no device
+        // saved a sensitivity of 0 - keeping that would multiply this side's
+        // motion to nothing, so start from this configuration's defaults.
+        printf("keyboard_post_init_user: eeprom saved for a different pointing configuration (main %s, peripheral %s), resetting to defaults\n",
+                hk_pointer_kind_to_string(hk_eeprom_config.pointing.main_pointer_kind), hk_pointer_kind_to_string(hk_eeprom_config.pointing.peripheral_pointer_kind));
         eeconfig_init_user();
     } else {
-        g_hk_state = init_state();
         deserialize_eeconfig_to_state(&hk_eeprom_config);
         debug_hk_state_to_console(&g_hk_state);
     }
@@ -1003,7 +1018,7 @@ void                       eeconfig_init_user(void) {
 
     memset(&hk_eeprom_config, 0, sizeof(hk_eeprom_config_t));
     hk_eeprom_config.check = true;
-    hk_eeprom_config.version = 103; // Increment this when changing the eeprom config structure.
+    hk_eeprom_config.version = HK_EEPROM_CONFIG_VERSION;
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
     // Default the auto-mouse layer on — QMK leaves it off, so a board that enables
     // the feature would otherwise never auto-activate the mouse layer. serialize
