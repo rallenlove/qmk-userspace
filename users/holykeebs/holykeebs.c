@@ -537,11 +537,14 @@ static void hk_cycle_pointer_sniping_sensitivity(bool forward, bool side_periphe
 
 static void hk_cycle_pointer_scroll_throttle(bool forward, bool side_peripheral) {
     hk_pointer_state_t* state = side_peripheral ? &g_hk_state.peripheral : &g_hk_state.main;
-    uint8_t new_value = forward ? state->pointer_scroll_throttle + 1 : state->pointer_scroll_throttle - 1;
-    if (new_value >= 0) {
-        state->pointer_scroll_throttle = new_value;
-        g_hk_state.dirty = true;
+    // The ends have to be checked before stepping: the value is unsigned, so
+    // 0 - 1 wraps to 255 (a divisor that large stops scrolling outright) and
+    // 255 + 1 back to 0. 0 is a valid setting and means no throttling at all.
+    if (forward ? state->pointer_scroll_throttle == UINT8_MAX : state->pointer_scroll_throttle == 0) {
+        return;
     }
+    state->pointer_scroll_throttle = forward ? state->pointer_scroll_throttle + 1 : state->pointer_scroll_throttle - 1;
+    g_hk_state.dirty = true;
 }
 
 static void hk_cycle_scroll_mode(bool side_peripheral) {
