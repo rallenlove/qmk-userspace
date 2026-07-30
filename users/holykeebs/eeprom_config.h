@@ -4,10 +4,11 @@
 #include <stdbool.h>
 #include "eeconfig.h"
 
-// Increment when the structure below changes, so old saves reset cleanly
-// instead of being deserialized as garbage.
-#define HK_EEPROM_CONFIG_VERSION 104
-
+// Persisted settings block. Its schema version is EECONFIG_USER_DATA_VERSION in
+// config.h (core keeps it outside the block); bump that when this layout
+// changes. Only the settings themselves live here - validity and version are
+// core's business, so there's no magic or version field of our own to keep in
+// sync with the layout that would hold it.
 typedef union PACKED {
     uint8_t raw[EECONFIG_USER_DATA_SIZE];
     struct {
@@ -39,11 +40,9 @@ typedef union PACKED {
             uint8_t peripheral_scroll_throttle;
         } pointing;
 
-        bool check            : 1;
         bool bongo_main       : 1;
         bool bongo_peripheral : 1;
         bool aml_enable       : 1;
-        uint8_t version;
         uint16_t aml_timeout;
     };
 } hk_eeprom_config_t;

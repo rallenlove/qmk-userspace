@@ -980,21 +980,12 @@ void keyboard_post_init_user(void) {
     // saved block below, so build the default state first either way.
     g_hk_state = init_state();
 
-    memset(&hk_eeprom_config, 0, sizeof(hk_eeprom_config_t));
+    // Reads zeros when the block was never written or was written under a
+    // different EECONFIG_USER_DATA_VERSION, which core checks against the
+    // version it keeps outside the block.
     eeconfig_read_user_datablock(&hk_eeprom_config, 0, sizeof(hk_eeprom_config_t));
-    printf("keyboard_post_init_user: reading eeprom, check: %u, version: %u\n", hk_eeprom_config.check, hk_eeprom_config.version);
-    if (!eeconfig_is_user_datablock_valid() || !hk_eeprom_config.check || hk_eeprom_config.version < 100) {
-        // Before version 100, the eeprom config didn't have a version. Reset it.
-        if (hk_eeprom_config.version < 100) {
-            printf("keyboard_post_init_user: eeprom version not found (%u), resetting to defaults\n", hk_eeprom_config.version);
-        } else if (!hk_eeprom_config.check) {
-            printf("keyboard_post_init_user: eeprom check failed, resetting to defaults\n");
-        }
-        printf("keyboard_post_init_user: eeprom data not found, initializing\n");
-        eeconfig_init_user();
-    } else if (hk_eeprom_config.version != HK_EEPROM_CONFIG_VERSION) {
-        // If the version isn't the latest one then the structure changed, reset it to avoid deserialization issues.
-        printf("keyboard_post_init_user: eeprom version is old, resetting to avoid deserialization issues (found %u, expected %u)\n", hk_eeprom_config.version, HK_EEPROM_CONFIG_VERSION);
+    if (!eeconfig_is_user_datablock_valid()) {
+        printf("keyboard_post_init_user: no saved settings for schema %u, initializing\n", (unsigned)EECONFIG_USER_DATA_VERSION);
         eeconfig_init_user();
     } else if (hk_eeprom_config.pointing.main_pointer_kind != g_hk_state.main.pointer_kind || hk_eeprom_config.pointing.peripheral_pointer_kind != g_hk_state.peripheral.pointer_kind) {
         // Saved under a different pointing configuration (a different
@@ -1036,9 +1027,9 @@ void                       eeconfig_init_user(void) {
     g_hk_state = init_state();
     debug_hk_state_to_console(&g_hk_state);
 
+    // Zero the whole block, not just the fields serialize writes, so the unused
+    // tail doesn't carry over whatever the previous schema left there.
     memset(&hk_eeprom_config, 0, sizeof(hk_eeprom_config_t));
-    hk_eeprom_config.check = true;
-    hk_eeprom_config.version = HK_EEPROM_CONFIG_VERSION;
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
     // Default the auto-mouse layer on — QMK leaves it off, so a board that enables
     // the feature would otherwise never auto-activate the mouse layer. serialize

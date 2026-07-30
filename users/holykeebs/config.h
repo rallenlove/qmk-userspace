@@ -19,6 +19,18 @@
 
 #define EECONFIG_USER_DATA_SIZE 64
 
+// Schema version for the settings block (hk_eeprom_config_t in
+// eeprom_config.h): bump it whenever that layout changes, so old saves are
+// discarded instead of being deserialized as garbage.
+//
+// QMK stores this alongside the block but outside it, and
+// eeconfig_is_user_datablock_valid() compares it against what's in flash, so a
+// layout change can't move the version that's supposed to describe the layout.
+// It lives here rather than next to the struct because core reads it at config
+// time; without it the stored value defaults to EECONFIG_USER_DATA_SIZE, which
+// never changes and so never invalidates anything.
+#define EECONFIG_USER_DATA_VERSION 104
+
 #undef MASTER_LEFT
 #undef EE_HANDS
 #undef MASTER_RIGHT
