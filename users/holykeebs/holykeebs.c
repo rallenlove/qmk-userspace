@@ -893,6 +893,23 @@ static void hk_detect_pointing_invoke(void) {
 #endif
 
 void housekeeping_task_user(void) {
+#if defined(SPLIT_POINTING_ENABLE) && defined(POINTING_DEVICE_COMBINED)
+    // The qmk_firmware base re-probes a local sensor that failed init for a
+    // short window after boot (pointing_device_retry_init); on the older vial
+    // base there's no retry and this just fires once at boot. A sensor that
+    // only answers on one of those retries missed the CPI push in
+    // keyboard_post_init_user and would run at the driver's compile-time
+    // default, so push it again the first time the sensor is seen. A no-op for
+    // devices whose sensitivity is a software multiplier.
+    if (is_keyboard_master()) {
+        static bool local_pointing_seen = false;
+        if (!local_pointing_seen && hk_local_pointing_present()) {
+            local_pointing_seen = true;
+            hk_apply_sensitivity_all();
+        }
+    }
+#endif
+
 #ifdef HK_SPLIT_DETECT_POINTING
     if (is_keyboard_master()) {
         hk_detect_pointing_invoke();
