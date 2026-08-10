@@ -24,79 +24,146 @@
 
 enum layer_number {
   _QWERTY = 0,
-  _LOWER,
-  _RAISE,
+  _NAV,
+  _MOUSE,
+  _SYM,
+  _NUM,
+  _FUN,
   _ADJUST,
 };
-
-#define RAISE MO(_RAISE)
-#define LOWER MO(_LOWER)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 /* QWERTY
+ *
+ * The leftmost column stacks the two macOS window-cycling chords: GESC sends `
+ * when Cmd (or Shift) is held, so Cmd+GESC cycles windows within an app and
+ * Cmd+Tab directly below it cycles apps. Pressed alone GESC is still Escape.
+ *
  * ,-----------------------------------------.                    ,-----------------------------------------.
- * | ESC  |   1  |   2  |   3  |   4  |   5  |                    |   6  |   7  |   8  |   9  |   0  |  ~   |
+ * | GESC |   1  |   2  |   3  |   4  |   5  |                    |   6  |   7  |   8  |   9  |   0  |  ~   |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
  * | Tab  |   Q  |   W  |   E  |   R  |   T  |                    |   Y  |   U  |   I  |   O  |   P  |  -   |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
  * |LCTRL |   A  |   S  |   D  |   F  |   G  |-------.    ,-------|   H  |   J  |   K  |   L  |   ;  |  '   |
- * |------+------+------+------+------+------|   [   |    |    ]  |------+------+------+------+------+------|
+ * |------+------+------+------+------+------|CW_TOGG|    |QK_REP |------+------+------+------+------+------|
  * |LShift|   Z  |   X  |   C  |   V  |   B  |-------|    |-------|   N  |   M  |   ,  |   .  |   /  |RShift|
  * `-----------------------------------------/       /     \      \-----------------------------------------'
- *                   |LOWER | LGUI | Alt  | /Space  /       \Enter \  |BackSP| RGUI |RAISE |
- *                   |      |      |      |/       /         \      \ |      |      |      |
+ *                   | Alt  |  Cmd |  Num | /Space  /       \ Mouse\  | Sym  |  Fun | RGUI |
+ *                   |      |      | /Tab |/  /Nav /         \ /Ent \  \/Bspc \/Del  |      |
  *                   `-------------------''-------'           '------''--------------------'
  */
 
  [_QWERTY] = LAYOUT(
-  KC_ESC,   KC_1,   KC_2,    KC_3,    KC_4,    KC_5,                     KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_GRV,
+  QK_GESC,  KC_1,   KC_2,    KC_3,    KC_4,    KC_5,                     KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_GRV,
   KC_TAB,   KC_Q,   KC_W,    KC_E,    KC_R,    KC_T,                     KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_MINS,
   KC_LCTL,  KC_A,   KC_S,    KC_D,    KC_F,    KC_G,                     KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,
-  KC_LSFT,  KC_Z,   KC_X,    KC_C,    KC_V,    KC_B, KC_LBRC,  KC_RBRC,  KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,  KC_RSFT,
-                      LOWER, KC_LGUI,  KC_LALT, KC_SPC,   KC_ENT,   KC_BSPC,  KC_RGUI, RAISE
+  KC_LSFT,  KC_Z,   KC_X,    KC_C,    KC_V,    KC_B, CW_TOGG,  QK_REP,   KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,  KC_RSFT,
+        KC_LALT, KC_LGUI, LT(_NUM, KC_TAB), LT(_NAV, KC_SPC),   LT(_MOUSE, KC_ENT), LT(_SYM, KC_BSPC), LT(_FUN, KC_DEL), KC_RGUI
 ),
-/* LOWER
+/* NAV
  * ,-----------------------------------------.                    ,-----------------------------------------.
  * |      |      |      |      |      |      |                    |      |      |      |      |      |      |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
- * |      |   !  |   @  |   #  |   $  |   %  |                    |   ^  |   &  |   *  |   (  |   )  |      |
+ * |      |      |      |      |      |      |                    |      | Home | PgDn | PgUp | End  |      |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
- * |      |   1  |   2  |   3  |   4  |   5  |-------.    ,-------|   6  |   7  |   8  |   9  |   0  |      |
- * |------+------+------+------+------+------|   [   |    |    ]  |------+------+------+------+------+------|
- * |      |      |      |      |      |      |-------|    |-------|   |  |   `  |   +  |   {  |   }  |      |
+ * |      | GUI  | Alt  | Ctrl | Shift|      |-------.    ,-------|      | Left | Down |  Up  |Right |      |
+ * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
+ * |      |      |      |      |      |      |-------|    |-------|      |  Ins |  Del |      |      |      |
  * `-----------------------------------------/       /     \      \-----------------------------------------'
- *                   |LOWER | LGUI | Alt  | /Space  /       \Enter \  |BackSP| RGUI |RAISE |
- *                   |      |      |      |/       /         \      \ |      |      |      |
+ *                   | Alt  |  Cmd |  Num | /Space  /       \ Mouse\  | Sym  |  Fun | RGUI |
+ *                   |      |      | /Tab |/  /Nav /         \ /Ent \  \/Bspc \/Del  |      |
  *                   `-------------------''-------'           '------''--------------------'
  */
-[_LOWER] = LAYOUT(
-  _______, _______, _______, _______, _______, _______,                        _______, _______, _______,_______, _______, _______,
-  _______, KC_EXLM, KC_AT,   KC_HASH, KC_DLR,  KC_PERC,                        KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN, _______,
-  _______, KC_1,    KC_2,    KC_3,    KC_4,    KC_5,                           KC_6,    KC_7,    KC_8,    KC_9,    KC_0, _______,
-  _______, HK_D_MODE, MS_BTN4, MS_BTN5, MS_BTN1, MS_BTN2, HK_S_MODE,  _______, KC_PIPE, KC_GRAVE, KC_PLUS, KC_LCBR, KC_RCBR, _______,
+[_NAV] = LAYOUT(
+  _______, _______, _______, _______, _______, _______,                        _______, _______, _______, _______, _______, _______,
+  _______, _______, _______, _______, _______, _______,                        _______, KC_HOME, KC_PGDN, KC_PGUP, KC_END,  _______,
+  _______, KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, _______,                        _______, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, _______,
+  _______, _______, _______, _______, _______, _______, _______,  _______,     _______, KC_INS,  KC_DEL,  _______, _______, _______,
                              _______, _______, _______, _______,      _______,  _______, _______, _______
 ),
-/* RAISE
+/* MOUSE
+ * ,-----------------------------------------.                    ,-----------------------------------------.
+ * |      |      |      |      |      |      |                    |      |      |      |      |      |      |
+ * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
+ * |      |      |      |      |      |      |                    |      |      |      |      |      |      |
+ * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
+ * |      |      |      |      |      |      |-------.    ,-------|      |WheelU|WheelD|      |      |      |
+ * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
+ * |D_MODE|Btn4  |Btn5  |      |      |S_MODE|-------|    |-------|      |      |      |      |      |      |
+ * `-----------------------------------------/       /     \      \-----------------------------------------'
+ *                   |      | Mid  |Right |  Left  /       \ Mouse\  | Num  |  Fun | RGUI |
+ *                   |      |click |click |/click /         \ /Ent \  \/Bspc \/Del  |      |
+ *                   `-------------------''-------'           '------''--------------------'
+ */
+[_MOUSE] = LAYOUT(
+  _______,   _______, _______, _______, _______, _______,                        _______, _______, _______, _______, _______, _______,
+  _______,   _______, _______, _______, _______, _______,                        _______, _______, _______, _______, _______, _______,
+  _______,   _______, _______, _______, _______, _______,                        _______, MS_WHLU, MS_WHLD, _______, _______, _______,
+  HK_D_MODE, MS_BTN4, MS_BTN5, _______, _______, HK_S_MODE, _______,  _______,     _______, _______, _______, _______, _______, _______,
+                             _______, MS_BTN3, MS_BTN2, MS_BTN1,      _______,  _______, _______, _______
+),
+/* SYM
+ * ,-----------------------------------------.                    ,-----------------------------------------.
+ * |      |      |      |      |      |      |                    |      |      |      |      |      |      |
+ * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
+ * |      |      |      |      |      |      |                    |      |      |      |   [  |   ]  |      |
+ * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
+ * |      |   !  |   @  |   #  |   $  |   %  |-------.    ,-------|   ^  |   &  |   *  |   (  |   )  |  |   |
+ * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
+ * |      |      |      |      |      |      |-------|    |-------|   |  |   `  |   +  |   {  |   }  |      |
+ * `-----------------------------------------/       /     \      \-----------------------------------------'
+ *                   | Alt  |  Cmd |  Num | /Space  /       \ Mouse\  | Sym  |  Fun | RGUI |
+ *                   |      |      | /Tab |/  /Nav /         \ /Ent \  \/Bspc \/Del  |      |
+ *                   `-------------------''-------'           '------''--------------------'
+ */
+[_SYM] = LAYOUT(
+  _______, _______, _______, _______, _______, _______,                        _______, _______, _______, _______, _______, _______,
+  _______, _______, _______, _______, _______, _______,                        _______, _______, _______, KC_LBRC, KC_RBRC, _______,
+  _______, KC_EXLM, KC_AT,   KC_HASH, KC_DLR,  KC_PERC,                        KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN, KC_PIPE,
+  _______, _______, _______, _______, _______, _______, _______,  _______,     KC_PIPE, KC_GRAVE, KC_PLUS, KC_LCBR, KC_RCBR, _______,
+                             _______, _______, _______, _______,      _______,  _______, _______, _______
+),
+/* NUM (tenkey layout, 0 on the thumb)
+ * ,-----------------------------------------.                    ,-----------------------------------------.
+ * |      |      |      |      |      |      |                    |      |      |   /  |   *  |   -  |      |
+ * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
+ * |      |      |      |      |      |      |                    |      |   7  |   8  |   9  |      |      |
+ * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
+ * |      |      |      |      |      |      |-------.    ,-------|      |   4  |   5  |   6  |   +  |  \   |
+ * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
+ * |      |      |      |      |      |      |-------|    |-------|      |   1  |   2  |   3  |   .  |      |
+ * `-----------------------------------------/       /     \      \-----------------------------------------'
+ *                   | Alt  |  Cmd |  Num | /Space  /       \ Mouse\  |  0   |  Fun | RGUI |
+ *                   |      |      | /Tab |/  /Nav /         \ /Ent \  \      \/Del  |      |
+ *                   `-------------------''-------'           '------''--------------------'
+ */
+[_NUM] = LAYOUT(
+  _______, _______, _______, _______, _______, _______,                        _______, _______, KC_SLSH, KC_ASTR, KC_MINS, _______,
+  _______, _______, _______, _______, _______, _______,                        _______, KC_7,    KC_8,    KC_9,    _______, _______,
+  _______, _______, _______, _______, _______, _______,                        _______, KC_4,    KC_5,    KC_6,    KC_PLUS, KC_BSLS,
+  _______, _______, _______, _______, _______, _______, _______,  _______,     _______, KC_1,    KC_2,    KC_3,    KC_DOT,  _______,
+                             _______, _______, _______, _______,      _______,  KC_0, _______, _______
+),
+/* FUN (F-keys plus media; volume on the home row, transport below)
  * ,-----------------------------------------.                    ,-----------------------------------------.
  * |      |      |      |      |      |      |                    |      |      |      |      |      |      |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
  * |  F1  |  F2  |  F3  |  F4  |  F5  |  F6  |                    |  F7  |  F8  |  F9  | F10  | F11  | F12  |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
- * |      |      |      |      |      |      |-------.    ,-------|      | Left | Down |  Up  |Right |      |
- * |------+------+------+------+------+------|   [   |    |    ]  |------+------+------+------+------+------|
- * |      |      |      |      |      |      |-------|    |-------|   +  |   =  |   [  |   ]  |   \  |      |
+ * |      |      |      |      |      |      |-------.    ,-------|      |VolDn |VolUp | Mute |      |      |
+ * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
+ * |      |      |      |      |      |      |-------|    |-------|      | Prev | Next | Play | Stop |      |
  * `-----------------------------------------/       /     \      \-----------------------------------------'
- *                   |LOWER | LGUI | Alt  | /Space  /       \Enter \  |BackSP| RGUI |RAISE |
- *                   |      |      |      |/       /         \      \ |      |      |      |
+ *                   | Alt  |  Cmd |  Num | /Space  /       \ Mouse\  | Sym  |  Fun | RGUI |
+ *                   |      |      | /Tab |/  /Nav /         \ /Ent \  \/Bspc \/Del  |      |
  *                   `-------------------''-------'           '------''--------------------'
  */
-
-[_RAISE] = LAYOUT(
+[_FUN] = LAYOUT(
   _______, _______, _______, _______, _______, _______,                     _______, _______, _______, _______, _______, _______,
   KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,                       KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,
-  _______, _______, _______, _______, _______, _______,                     XXXXXXX, KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, XXXXXXX,
-  _______, _______, _______, _______, _______, _______,   _______, _______, KC_PLUS, KC_EQL,  KC_LBRC, KC_RBRC, KC_BSLS, _______,
+  _______, _______, _______, _______, _______, _______,                     _______, KC_VOLD, KC_VOLU, KC_MUTE, _______, _______,
+  _______, _______, _______, _______, _______, _______,   _______, _______, _______, KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP, _______,
                              _______, _______, _______,  _______, _______,  _______, _______, _______
 ),
 
@@ -124,9 +191,25 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 layer_state_t layer_state_set_user(layer_state_t state) {
-  state = update_tri_layer_state(state, _RAISE, _LOWER, _ADJUST);
+  state = update_tri_layer_state(state, _NUM, _FUN, _ADJUST);
   return state;
 }
+
+// GOTCHA: if an edit to this file seems to have no effect after flashing, the
+// board is still running the previous keymap out of EEPROM.
+//
+// VIA_ENABLE means keycodes are read from EEPROM's dynamic keymap, not from
+// flash. VIA only re-initializes it from flash when via_eeprom_is_valid() fails,
+// and that magic is derived from QMK_BUILDDATE's *date* alone -- so a rebuild on
+// the same day as the last flash still looks valid and the old keycodes persist.
+// Symptoms are confusing rather than dead: an old LT() thumb key keeps sending
+// its old layer, so mods silently drop out of chords.
+//
+// To force a reload: hold Tab+Del (_ADJUST) and press the leftmost home-row key
+// (QK_CLEAR_EEPROM). Note that also resets the holykeebs trackball settings; to
+// reload only the keymap, temporarily add a via_init_kb() calling
+// via_eeprom_set_valid(false) -- but not keyboard_post_init_user, which the
+// holykeebs userspace already defines.
 
 #if defined(OLED_ENABLE) && !defined(HK_OLED_ENABLE)
 
@@ -203,11 +286,20 @@ bool oled_task_user(void) {
     case _QWERTY:
         oled_write_ln_P(PSTR("Default"), false);
         break;
-    case _RAISE:
-        oled_write_ln_P(PSTR("Raise"), false);
+    case _NAV:
+        oled_write_ln_P(PSTR("Nav"), false);
         break;
-    case _LOWER:
-        oled_write_ln_P(PSTR("Lower"), false);
+    case _MOUSE:
+        oled_write_ln_P(PSTR("Mouse"), false);
+        break;
+    case _SYM:
+        oled_write_ln_P(PSTR("Sym"), false);
+        break;
+    case _NUM:
+        oled_write_ln_P(PSTR("Num"), false);
+        break;
+    case _FUN:
+        oled_write_ln_P(PSTR("Fun"), false);
         break;
     case _ADJUST:
         oled_write_ln_P(PSTR("Adjust"), false);
