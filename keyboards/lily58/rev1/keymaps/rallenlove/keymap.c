@@ -22,6 +22,27 @@
 
 //extern uint8_t is_master;
 
+// Home row mods, GACS order: GUI / Alt / Ctrl / Shift walking inward from the
+// pinky, mirrored on the other hand. Same order the mod rows on NAV, NUM,
+// MOUSE and FUN use, so a mod sits under the same finger everywhere.
+//
+// Left-hand mod keycodes on both hands (LSFT_T on J, not RSFT_T) to match
+// those layers, and so a right-hand hold can't turn into AltGr on a non-mac
+// host.
+//
+// These are for cross-hand chords. Same-hand ones -- Cmd+C, Cmd+V, Ctrl+A --
+// are what the thumb Cmd/Alt and the outer-column Ctrl/Shift are still there
+// for; CHORDAL_HOLD deliberately taps a home row mod chorded with its own
+// hand. See config.h for the rest of the tap-hold reasoning.
+#define HM_A LGUI_T(KC_A)
+#define HM_S LALT_T(KC_S)
+#define HM_D LCTL_T(KC_D)
+#define HM_F LSFT_T(KC_F)
+#define HM_J LSFT_T(KC_J)
+#define HM_K LCTL_T(KC_K)
+#define HM_L LALT_T(KC_L)
+#define HM_SCLN LGUI_T(KC_SCLN)
+
 enum layer_number {
   _QWERTY = 0,
   _NAV,
@@ -36,15 +57,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 /* QWERTY
  *
+ * The home row is GACS mods (see above): tap for the letter, hold for the mod.
+ *
  * The leftmost column stacks the two macOS window-cycling chords: GESC sends `
  * when Cmd (or Shift) is held, so Cmd+GESC cycles windows within an app and
  * Cmd+Tab directly below it cycles apps. Pressed alone GESC is still Escape.
  *
  * ,-----------------------------------------.                    ,-----------------------------------------.
- * | GESC |   1  |   2  |   3  |   4  |   5  |                    |   6  |   7  |   8  |   9  |   0  |  ~   |
+ * | GESC |   1  |   2  |   3  |   4  |   5  |                    |   6  |   7  |   8  |   9  |   0  | Bspc |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
- * | Tab  |   Q  |   W  |   E  |   R  |   T  |                    |   Y  |   U  |   I  |   O  |   P  |  -   |
+ * | Tab  |   Q  |   W  |   E  |   R  |   T  |                    |   Y  |   U  |   I  |   O  |   P  |  \   |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
+ * |      | GUI  | Alt  | Ctrl | Shift|      |                    |      | Shift| Ctrl | Alt  | GUI  |      |
  * |LCTRL |   A  |   S  |   D  |   F  |   G  |-------.    ,-------|   H  |   J  |   K  |   L  |   ;  |  '   |
  * |------+------+------+------+------+------|CW_TOGG|    |QK_REP |------+------+------+------+------+------|
  * |LShift|   Z  |   X  |   C  |   V  |   B  |-------|    |-------|   N  |   M  |   ,  |   .  |   /  |RShift|
@@ -55,13 +79,20 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
 
  [_QWERTY] = LAYOUT(
-  QK_GESC,  KC_1,   KC_2,    KC_3,    KC_4,    KC_5,                     KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_GRV,
-  KC_TAB,   KC_Q,   KC_W,    KC_E,    KC_R,    KC_T,                     KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_MINS,
-  KC_LCTL,  KC_A,   KC_S,    KC_D,    KC_F,    KC_G,                     KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,
+  QK_GESC,  KC_1,   KC_2,    KC_3,    KC_4,    KC_5,                     KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_BSPC,
+  KC_TAB,   KC_Q,   KC_W,    KC_E,    KC_R,    KC_T,                     KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_BSLS,
+  KC_LCTL,  HM_A,   HM_S,    HM_D,    HM_F,    KC_G,                     KC_H,    HM_J,    HM_K,    HM_L,    HM_SCLN, KC_QUOT,
   KC_LSFT,  KC_Z,   KC_X,    KC_C,    KC_V,    KC_B, CW_TOGG,  QK_REP,   KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,  KC_RSFT,
         KC_LALT, KC_LGUI, LT(_NUM, KC_TAB), LT(_NAV, KC_SPC),   LT(_MOUSE, KC_ENT), LT(_SYM, KC_BSPC), LT(_FUN, KC_DEL), KC_RGUI
 ),
 /* NAV
+ *
+ * Every layer held by a thumb repeats the GACS mods as plain mods on the free
+ * hand's home row. The base layer's home row mods are out of reach while a
+ * thumb key is held -- that hand is on the layer's own keys, or the mod-tap is
+ * a same-hand chord with the thumb and settles as a tap -- so Cmd+Left,
+ * Shift+PgDn, Cmd+click and Cmd+1 all need the mods on the layer itself.
+ *
  * ,-----------------------------------------.                    ,-----------------------------------------.
  * |      |      |      |      |      |      |                    |      |      |      |      |      |      |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
@@ -88,7 +119,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
  * |      |      |      |      |      |      |                    |      |      |      |      |      |      |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
- * |      |      |      |      |      |      |-------.    ,-------|      |WheelU|WheelD|      |      |      |
+ * |      | GUI  | Alt  | Ctrl | Shift|      |-------.    ,-------|      |WheelU|WheelD|      |      |      |
  * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
  * |D_MODE|Btn4  |Btn5  |      |      |S_MODE|-------|    |-------|      |      |      |      |      |      |
  * `-----------------------------------------/       /     \      \-----------------------------------------'
@@ -99,7 +130,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [_MOUSE] = LAYOUT(
   _______,   _______, _______, _______, _______, _______,                        _______, _______, _______, _______, _______, _______,
   _______,   _______, _______, _______, _______, _______,                        _______, _______, _______, _______, _______, _______,
-  _______,   _______, _______, _______, _______, _______,                        _______, MS_WHLU, MS_WHLD, _______, _______, _______,
+  _______,   KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, _______,                        _______, MS_WHLU, MS_WHLD, _______, _______, _______,
   HK_D_MODE, MS_BTN4, MS_BTN5, _______, _______, HK_S_MODE, _______,  _______,     _______, _______, _______, _______, _______, _______,
                              _______, MS_BTN3, MS_BTN2, MS_BTN1,      _______,  _______, _______, _______
 ),
@@ -107,11 +138,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * ,-----------------------------------------.                    ,-----------------------------------------.
  * |      |      |      |      |      |      |                    |      |      |      |      |      |      |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
- * |      |      |      |      |      |      |                    |      |      |      |   [  |   ]  |      |
+ * |  ~   |   !  |   @  |   #  |   $  |   %  |                    |   ^  |   &  |   *  |   (  |   )  |      |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
- * |      |   !  |   @  |   #  |   $  |   %  |-------.    ,-------|   ^  |   &  |   *  |   (  |   )  |  |   |
+ * |      |      |      |      |      |      |-------.    ,-------|      |   -  |   _  |   [  |   ]  |  `   |
  * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
- * |      |      |      |      |      |      |-------|    |-------|   |  |   `  |   +  |   {  |   }  |      |
+ * |      |      |      |      |      |      |-------|    |-------|      |   =  |   +  |   {  |   }  |      |
  * `-----------------------------------------/       /     \      \-----------------------------------------'
  *                   | Alt  |  Cmd |  Num | /Space  /       \ Mouse\  | Sym  |  Fun | RGUI |
  *                   |      |      | /Tab |/  /Nav /         \ /Ent \  \/Bspc \/Del  |      |
@@ -119,9 +150,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
 [_SYM] = LAYOUT(
   _______, _______, _______, _______, _______, _______,                        _______, _______, _______, _______, _______, _______,
-  _______, _______, _______, _______, _______, _______,                        _______, _______, _______, KC_LBRC, KC_RBRC, _______,
-  _______, KC_EXLM, KC_AT,   KC_HASH, KC_DLR,  KC_PERC,                        KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN, KC_PIPE,
-  _______, _______, _______, _______, _______, _______, _______,  _______,     KC_PIPE, KC_GRAVE, KC_PLUS, KC_LCBR, KC_RCBR, _______,
+  KC_TILD, KC_EXLM, KC_AT,   KC_HASH, KC_DLR,  KC_PERC,                        KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN, _______,
+  _______, _______, _______, _______, _______, _______,                        _______, KC_MINS, KC_UNDS, KC_LBRC, KC_RBRC, KC_GRV,
+  _______, _______, _______, _______, _______, _______, _______,  _______,     _______, KC_EQL,  KC_PLUS, KC_LCBR, KC_RCBR, _______,
                              _______, _______, _______, _______,      _______,  _______, _______, _______
 ),
 /* NUM (tenkey layout, 0 on the thumb)
@@ -130,7 +161,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
  * |      |      |      |      |      |      |                    |      |   7  |   8  |   9  |      |      |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
- * |      |      |      |      |      |      |-------.    ,-------|      |   4  |   5  |   6  |   +  |  \   |
+ * |      | GUI  | Alt  | Ctrl | Shift|      |-------.    ,-------|      |   4  |   5  |   6  |   +  |      |
  * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
  * |      |      |      |      |      |      |-------|    |-------|      |   1  |   2  |   3  |   .  |      |
  * `-----------------------------------------/       /     \      \-----------------------------------------'
@@ -141,7 +172,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [_NUM] = LAYOUT(
   _______, _______, _______, _______, _______, _______,                        _______, _______, KC_SLSH, KC_ASTR, KC_MINS, _______,
   _______, _______, _______, _______, _______, _______,                        _______, KC_7,    KC_8,    KC_9,    _______, _______,
-  _______, _______, _______, _______, _______, _______,                        _______, KC_4,    KC_5,    KC_6,    KC_PLUS, KC_BSLS,
+  _______, KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, _______,                        _______, KC_4,    KC_5,    KC_6,    KC_PLUS, _______,
   _______, _______, _______, _______, _______, _______, _______,  _______,     _______, KC_1,    KC_2,    KC_3,    KC_DOT,  _______,
                              _______, _______, _______, _______,      _______,  KC_0, _______, _______
 ),
@@ -151,7 +182,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
  * |  F1  |  F2  |  F3  |  F4  |  F5  |  F6  |                    |  F7  |  F8  |  F9  | F10  | F11  | F12  |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
- * |      |      |      |      |      |      |-------.    ,-------|      |VolDn |VolUp | Mute |      |      |
+ * |      | GUI  | Alt  | Ctrl | Shift|      |-------.    ,-------|      |VolDn |VolUp | Mute |      |      |
  * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
  * |      |      |      |      |      |      |-------|    |-------|      | Prev | Next | Play | Stop |      |
  * `-----------------------------------------/       /     \      \-----------------------------------------'
@@ -162,7 +193,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [_FUN] = LAYOUT(
   _______, _______, _______, _______, _______, _______,                     _______, _______, _______, _______, _______, _______,
   KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,                       KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,
-  _______, _______, _______, _______, _______, _______,                     _______, KC_VOLD, KC_VOLU, KC_MUTE, _______, _______,
+  _______, KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, _______,                     _______, KC_VOLD, KC_VOLU, KC_MUTE, _______, _______,
   _______, _______, _______, _______, _______, _______,   _______, _______, _______, KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP, _______,
                              _______, _______, _______,  _______, _______,  _______, _______, _______
 ),
@@ -193,6 +224,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 layer_state_t layer_state_set_user(layer_state_t state) {
   state = update_tri_layer_state(state, _NUM, _FUN, _ADJUST);
   return state;
+}
+
+// The thumb layer-taps want HOLD_ON_OTHER_KEY_PRESS; the home row mods must
+// not have it, or every cross-hand rolled bigram out of A/S/D/F/J/K/L/; would
+// fire a mod chord. Mod-taps fall through to PERMISSIVE_HOLD instead, which
+// waits for the nested release. config.h has the full picture.
+bool get_hold_on_other_key_press(uint16_t keycode, keyrecord_t *record) {
+  return IS_QK_LAYER_TAP(keycode);
 }
 
 // GOTCHA: if an edit to this file seems to have no effect after flashing, the
