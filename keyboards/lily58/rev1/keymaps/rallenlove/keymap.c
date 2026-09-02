@@ -73,8 +73,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |------+------+------+------+------+------|CW_TOGG|    |QK_REP |------+------+------+------+------+------|
  * |LShift|   Z  |   X  |   C  |   V  |   B  |-------|    |-------|   N  |   M  |   ,  |   .  |   /  |RShift|
  * `-----------------------------------------/       /     \      \-----------------------------------------'
- *                   | Alt  |  Cmd |  Num | /Space  /       \ Mouse\  | Sym  |  Fun | RGUI |
- *                   |      |      | /Tab |/  /Nav /         \ /Ent \  \/Bspc \/Del  |      |
+ *                   | Alt  |  Cmd |  Num | /Tab    /       \ Mouse\  | Sym  |  Fun | RGUI |
+ *                   |      |      | /Spc |/  /Nav /         \ /Bspc\  \/Ent  \/Del  |      |
  *                   `-------------------''-------'           '------''--------------------'
  */
 
@@ -83,7 +83,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_TAB,   KC_Q,   KC_W,    KC_E,    KC_R,    KC_T,                     KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_BSLS,
   KC_LCTL,  HM_A,   HM_S,    HM_D,    HM_F,    KC_G,                     KC_H,    HM_J,    HM_K,    HM_L,    HM_SCLN, KC_QUOT,
   KC_LSFT,  KC_Z,   KC_X,    KC_C,    KC_V,    KC_B, CW_TOGG,  QK_REP,   KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,  KC_RSFT,
-        KC_LALT, KC_LGUI, LT(_NUM, KC_TAB), LT(_NAV, KC_SPC),   LT(_MOUSE, KC_ENT), LT(_SYM, KC_BSPC), LT(_FUN, KC_DEL), KC_RGUI
+        KC_LALT, KC_LGUI, LT(_NUM, KC_SPC), LT(_NAV, KC_TAB),   LT(_MOUSE, KC_BSPC), LT(_SYM, KC_ENT), LT(_FUN, KC_DEL), KC_RGUI
 ),
 /* NAV
  *
@@ -102,8 +102,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
  * |      |      |      |      |      |      |-------|    |-------|      |  Ins |  Del |      |      |      |
  * `-----------------------------------------/       /     \      \-----------------------------------------'
- *                   | Alt  |  Cmd |  Num | /Space  /       \ Mouse\  | Sym  |  Fun | RGUI |
- *                   |      |      | /Tab |/  /Nav /         \ /Ent \  \/Bspc \/Del  |      |
+ *                   | Alt  |  Cmd |  Num | /Tab    /       \ Mouse\  | Sym  |  Fun | RGUI |
+ *                   |      |      | /Spc |/  /Nav /         \ /Bspc\  \/Ent  \/Del  |      |
  *                   `-------------------''-------'           '------''--------------------'
  */
 [_NAV] = LAYOUT(
@@ -123,8 +123,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
  * |D_MODE|Btn4  |Btn5  |      |      |S_MODE|-------|    |-------|      |      |      |      |      |      |
  * `-----------------------------------------/       /     \      \-----------------------------------------'
- *                   |      | Mid  |Right |  Left  /       \ Mouse\  | Num  |  Fun | RGUI |
- *                   |      |click |click |/click /         \ /Ent \  \/Bspc \/Del  |      |
+ *                   |      | Mid  |Right |  Left  /       \ Mouse\  | Sym  |  Fun | RGUI |
+ *                   |      |click |click |/click /         \ /Bspc\  \/Ent  \/Del  |      |
  *                   `-------------------''-------'           '------''--------------------'
  */
 [_MOUSE] = LAYOUT(
@@ -144,8 +144,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
  * |      |      |      |      |      |      |-------|    |-------|      |   =  |   +  |   {  |   }  |      |
  * `-----------------------------------------/       /     \      \-----------------------------------------'
- *                   | Alt  |  Cmd |  Num | /Space  /       \ Mouse\  | Sym  |  Fun | RGUI |
- *                   |      |      | /Tab |/  /Nav /         \ /Ent \  \/Bspc \/Del  |      |
+ *                   | Alt  |  Cmd |  Num | /Tab    /       \ Mouse\  | Sym  |  Fun | RGUI |
+ *                   |      |      | /Spc |/  /Nav /         \ /Bspc\  \/Ent  \/Del  |      |
  *                   `-------------------''-------'           '------''--------------------'
  */
 [_SYM] = LAYOUT(
@@ -165,8 +165,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
  * |      |      |      |      |      |      |-------|    |-------|      |   1  |   2  |   3  |   .  |      |
  * `-----------------------------------------/       /     \      \-----------------------------------------'
- *                   | Alt  |  Cmd |  Num | /Space  /       \ Mouse\  |  0   |  Fun | RGUI |
- *                   |      |      | /Tab |/  /Nav /         \ /Ent \  \      \/Del  |      |
+ *                   | Alt  |  Cmd |  Num | /Tab    /       \ Mouse\  |  0   |  Fun | RGUI |
+ *                   |      |      | /Spc |/  /Nav /         \ /Bspc\  \      \/Del  |      |
  *                   `-------------------''-------'           '------''--------------------'
  */
 [_NUM] = LAYOUT(
@@ -186,8 +186,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
  * |      |      |      |      |      |      |-------|    |-------|      | Prev | Next | Play | Stop |      |
  * `-----------------------------------------/       /     \      \-----------------------------------------'
- *                   | Alt  |  Cmd |  Num | /Space  /       \ Mouse\  | Sym  |  Fun | RGUI |
- *                   |      |      | /Tab |/  /Nav /         \ /Ent \  \/Bspc \/Del  |      |
+ *                   | Alt  |  Cmd |  Num | /Tab    /       \ Mouse\  | Sym  |  Fun | RGUI |
+ *                   |      |      | /Spc |/  /Nav /         \ /Bspc\  \/Ent  \/Del  |      |
  *                   `-------------------''-------'           '------''--------------------'
  */
 [_FUN] = LAYOUT(
